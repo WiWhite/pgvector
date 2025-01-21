@@ -19,8 +19,8 @@ RUN apt-get update && \
 		apt-mark unhold locales && \
 		rm -rf /var/lib/apt/lists/* && \
   		wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O master.zip && \
-    		wget https://services.gradle.org/distributions/gradle-8.12-bin.zip -O gradle-8.12-bin.zip && \
-      		unzip master.zip &&  mkdir -p /opt/gradle && unzip -d /opt/gradle gradle-8.12-bin.zip && \
+    		wget https://services.gradle.org/distributions/gradle-8.12-bin.zip -O gradle-8.12-bin.zip & wait && \
+      		unzip master.zip & wait && mkdir -p /opt/gradle && unzip -d /opt/gradle gradle-8.12-bin.zip & wait && \
 		export PATH=$PATH:/opt/gradle/gradle-8.12/bin && cd dict_uk && ./gradlew expand && \
   		cd distr/hunspell && ../../gradlew hunspell && \
     		cp build/hunspell/uk_UA.aff /usr/share/postgresql/17/tsearch_data/uk_ua.affix && \
