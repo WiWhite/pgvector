@@ -4,11 +4,10 @@ FROM postgres:$PG_MAJOR
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
-    postgresql-server-dev-17 \
+    postgresql-server-dev-$PG_MAJOR \
     wget \
     unzip \
-    default-jdk && \
-    rm -rf /var/lib/apt/lists/*
+    default-jdk
 
 COPY . /tmp/pgvector
 RUN cd /tmp/pgvector && \
@@ -19,7 +18,7 @@ RUN cd /tmp/pgvector && \
     cp LICENSE README.md /usr/share/doc/pgvector && \
     rm -r /tmp/pgvector
 
-RUN wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip && \
+RUN wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip && ls -la && \
     wget https://services.gradle.org/distributions/gradle-8.12-bin.zip && \
     unzip dict_uk-master.zip && \
     mkdir -p /opt/gradle && \
