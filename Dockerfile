@@ -6,7 +6,7 @@ COPY . /tmp/pgvector
 
 RUN apt-get update && \
 		apt-mark hold locales && \
-		apt-get install -y --no-install-recommends build-essential postgresql-server-dev-$PG_MAJOR wget unzip && \
+		apt-get install -y --no-install-recommends build-essential postgresql-server-dev-$PG_MAJOR wget unzip default-jdk && \
 		cd /tmp/pgvector && \
 		make clean && \
 		make OPTFLAGS="" && \
