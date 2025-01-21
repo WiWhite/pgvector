@@ -19,9 +19,9 @@ RUN cd /tmp/pgvector && \
     cp LICENSE README.md /usr/share/doc/pgvector && \
     rm -r /tmp/pgvector
 
-RUN wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O master.zip && \
-    wget https://services.gradle.org/distributions/gradle-8.12-bin.zip -O gradle-8.12-bin.zip && \
-    unzip master.zip && \
+RUN wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip && \
+    wget https://services.gradle.org/distributions/gradle-8.12-bin.zip && \
+    unzip dict_uk-master.zip && \
     mkdir -p /opt/gradle && \
     unzip -d /opt/gradle gradle-8.12-bin.zip && \
     export PATH=$PATH:/opt/gradle/gradle-8.12/bin && \
