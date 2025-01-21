@@ -24,7 +24,7 @@ RUN wget  https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O m
     mkdir -p /opt/gradle && \
     unzip -d /opt/gradle gradle-8.12-bin.zip && \
     export PATH=$PATH:/opt/gradle/gradle-8.12/bin && \
-    mv master/dict_uk-master ./dict_uk && \
+    cp -r dict_uk-master dict_uk && \
     cd dict_uk && ./gradlew expand && \
     cd distr/hunspell && ../../gradlew hunspell && \
     cp build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix && \
