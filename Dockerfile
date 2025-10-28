@@ -1,7 +1,7 @@
-FROM debian:$DEBIAN_CODENAME AS builder
-
 ARG PG_MAJOR=17
-ARG DEBIAN_CODENAME
+ARG DEBIAN_CODENAME=bookworm
+
+FROM debian:$DEBIAN_CODENAME AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
