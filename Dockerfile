@@ -2,36 +2,37 @@
 
 ARG PG_MAJOR=17
 ARG DEBIAN_CODENAME=bookworm
+
+FROM debian:$DEBIAN_CODENAME AS builder
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        postgresql-server-dev-$PG_MAJOR \
+        wget \
+        unzip \
+        default-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG PG_MAJOR
+ADD https://github.com/WiWhite/pgvector.git#v0.8.1 /tmp/pgvector
+RUN cd /tmp/pgvector && \
+    make clean && \
+    make OPTFLAGS="" && \
+    make install
+
+RUN wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O /tmp/master.zip && \
+    unzip /tmp/master.zip -d /tmp && \
+    cp -r /tmp/dict_uk-master /tmp/dict_uk && \
+    cd /tmp/dict_uk && ./gradlew expand && \
+    cd distr/hunspell && ../../gradlew hunspell
+
 FROM postgres:$PG_MAJOR-$DEBIAN_CODENAME
 ARG PG_MAJOR
 
-ADD https://github.com/WiWhite/pgvector.git#v0.8.1 /tmp/pgvector
+COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/pgvector.so /usr/lib/postgresql/$PG_MAJOR/lib/
+COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/pgvector* /usr/share/postgresql/$PG_MAJOR/extension/
 
-RUN apt-get update && \
-		apt-mark hold locales && \
-		apt-get install -y --no-install-recommends build-essential postgresql-server-dev-$PG_MAJOR && \
-		cd /tmp/pgvector && \
-		make clean && \
-		make OPTFLAGS="" && \
-		make install && \
-		mkdir /usr/share/doc/pgvector && \
-		cp LICENSE README.md /usr/share/doc/pgvector && \
-		rm -r /tmp/pgvector && \
-		apt-get remove -y build-essential postgresql-server-dev-$PG_MAJOR && \
-		apt-get autoremove -y && \
-		apt-mark unhold locales && \
-		rm -rf /var/lib/apt/lists/*
-
-RUN wget  https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O master.zip && \
-    wget https://services.gradle.org/distributions/gradle-8.12-bin.zip && \
-    unzip master.zip && \
-    mkdir -p /opt/gradle && \
-    unzip -d /opt/gradle gradle-8.12-bin.zip && \
-    export PATH=$PATH:/opt/gradle/gradle-8.12/bin && \
-    cp -r dict_uk-master dict_uk && \
-    cd dict_uk && ./gradlew expand && \
-    cd distr/hunspell && ../../gradlew hunspell && \
-    cp build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix && \
-    cp build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict && \
-    cp ../postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop && \
-    rm -rf /opt/gradle gradle-8.12-bin.zip master.zip dict_uk dict_uk-master
+COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix
+COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict
+COPY --from=builder /tmp/dict_uk/distr/postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
