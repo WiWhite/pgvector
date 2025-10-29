@@ -1,19 +1,13 @@
 # syntax=docker/dockerfile:1
 
-# --- Глобальні аргументи ---
-# Оголошуємо до 'FROM', щоб вони були доступні в 'FROM' інструкціях
 ARG PG_MAJOR=17
 ARG DEBIAN_CODENAME=bookworm
 
-# --- Етап 1: "Builder" ---
-# Використовуємо повний образ Debian з інструментами для збірки
 FROM debian:$DEBIAN_CODENAME AS builder
 
-# Повторно оголошуємо аргументи, щоб вони були доступні всередині RUN
 ARG PG_MAJOR
 ARG DEBIAN_CODENAME
 
-# Встановлюємо ВСІ залежності для збірки (PostgreSQL + Словники)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
@@ -35,7 +29,6 @@ RUN apt-get update && \
     apt-get purge -y --auto-remove curl gnupg && \
     rm -rf /var/lib/apt/lists/*
 
-# 1. Збірка pgvector
 RUN mkdir -p /tmp/pgvector && \
     cd /tmp && \
     wget -O pgvector.tar.gz https://github.com/WiWhite/pgvector/archive/refs/tags/v0.8.1.tar.gz && \
@@ -47,7 +40,6 @@ RUN mkdir -p /tmp/pgvector && \
     make install && \
     rm -rf /tmp/pgvector
 
-# 2. Збірка словників
 RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
     export LANG=C.UTF-8 && \
     wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O /tmp/master.zip && \
@@ -57,21 +49,13 @@ RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
     cd distr/hunspell && ../../gradlew hunspell && \
     rm -rf /tmp/master.zip /tmp/dict_uk-master
 
-
-# --- Етап 2: Фінальний образ ---
-# Починаємо з чистого образу postgres
 FROM postgres:$PG_MAJOR-$DEBIAN_CODENAME
 
-# Повторно оголошуємо ARG для використання в COPY
 ARG PG_MAJOR
 
-# Копіюємо зібрані артефакти з етапу "builder"
-
-# 1. Копіюємо скомпільований pgvector
 COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/vector.so /usr/lib/postgresql/$PG_MAJOR/lib/
 COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/vector* /usr/share/postgresql/$PG_MAJOR/extension/
 
-# 2. Копіюємо зібрані словники
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict
 COPY --from=builder /tmp/dict_uk/distr/postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
