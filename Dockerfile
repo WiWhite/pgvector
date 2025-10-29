@@ -68,7 +68,7 @@ ARG PG_MAJOR
 # Копіюємо зібрані артефакти з етапу "builder"
 
 # 1. Копіюємо скомпільований pgvector
-COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/pgvector.so /usr/lib/postgresql/$PG_MAJOR/lib/
+COPY --from=builder /usr/lib/x86_64-linux-gnu/postgresql/$PG_MAJOR/lib/pgvector.so /usr/lib/postgresql/$PG_MAJOR/lib/
 COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/pgvector* /usr/share/postgresql/$PG_MAJOR/extension/
 
 # 2. Копіюємо зібрані словники
