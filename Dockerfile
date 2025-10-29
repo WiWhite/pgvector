@@ -48,7 +48,9 @@ RUN mkdir -p /tmp/pgvector && \
     make install
 
 # 2. Збірка словників
-RUN wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O /tmp/master.zip && \
+RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
+    export LANG=C.UTF-8 && \
+    wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O /tmp/master.zip && \
     unzip /tmp/master.zip -d /tmp && \
     cp -r /tmp/dict_uk-master /tmp/dict_uk && \
     cd /tmp/dict_uk && ./gradlew expand && \
