@@ -29,10 +29,10 @@ RUN apt-get update && \
     && \
     rm -rf /var/lib/apt/lists/*
 
-ARG PGVECTOR_VERSION=0.7.4
+ARG PGVECTOR_VERSION=0.8.1
 RUN mkdir -p /tmp/pgvector && \
     cd /tmp && \
-    wget -O pgvector.tar.gz https://github.com/pgvector/pgvector/archive/refs/tags/v${PGVECTOR_VERSION}.tar.gz && \
+    wget -O pgvector.tar.gz https://github.com/WiWhite/pgvector/archive/refs/tags/v${PGVECTOR_VERSION}.tar.gz && \
     tar -xzf pgvector.tar.gz -C /tmp && \
     mv /tmp/pgvector-* /tmp/pgvector && \
     cd /tmp/pgvector && \
