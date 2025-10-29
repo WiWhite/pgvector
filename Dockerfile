@@ -39,13 +39,24 @@ RUN apt-get update && \
 RUN mkdir -p /tmp/pgvector && \
     cd /tmp && \
     wget -O pgvector.tar.gz https://github.com/WiWhite/pgvector/archive/refs/tags/v0.8.1.tar.gz && \
-    # Використовуємо strip-components=1, щоб покласти вміст прямо в /tmp/pgvector
     tar -xzf pgvector.tar.gz -C /tmp/pgvector --strip-components=1 && \
     rm pgvector.tar.gz && \
     cd /tmp/pgvector && \
     make clean && \
     make OPTFLAGS="" && \
-    make install
+    make install && \
+    \
+    # --- ДЕБАГ ---
+    # Додаємо команди, щоб знайти файл
+    echo "--- Пошук pgvector.so ---" && \
+    echo "pg_config --pkglibdir показує:" && \
+    pg_config --pkglibdir && \
+    echo "Пошук файлу в /usr/lib:" && \
+    find /usr/lib -name pgvector.so && \
+    echo "--- Кінець пошуку ---" && \
+    \
+    # Не видаляємо /tmp/pgvector, щоб не зламати COPY, якщо він там
+    echo "Завершення збірки pgvector"
 
 # 2. Збірка словників
 RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
