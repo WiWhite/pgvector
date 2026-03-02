@@ -63,12 +63,12 @@ FROM postgres:$PG_MAJOR-$DEBIAN_CODENAME
 
 ARG PG_MAJOR
 
-COPY --from=builder /usr/lib/postgresql/data/$PG_MAJOR/lib/vector.so /usr/lib/postgresql/data/$PG_MAJOR/lib/
+COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/vector.so /usr/lib/postgresql/$PG_MAJOR/lib/
 COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/vector* /usr/share/postgresql/$PG_MAJOR/extension/
 
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict
 COPY --from=builder /tmp/dict_uk/distr/postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
 
-COPY --from=builder /usr/lib/postgresql/data/$PG_MAJOR/lib/pg_textsearch.so /usr/lib/postgresql/data/$PG_MAJOR/lib/
+COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/pg_textsearch.so /usr/lib/postgresql/$PG_MAJOR/lib/
 COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/pg_textsearch* /usr/share/postgresql/$PG_MAJOR/extension/
