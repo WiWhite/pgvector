@@ -24,6 +24,7 @@ RUN apt-get update && \
         postgresql-server-dev-$PG_MAJOR \
         wget \
         unzip \
+        git \
         default-jdk-headless \
     && \
     apt-get purge -y --auto-remove curl gnupg && \
@@ -40,6 +41,13 @@ RUN mkdir -p /tmp/pgvector && \
     make install && \
     rm -rf /tmp/pgvector
 
+RUN cd /tmp && \
+    git clone --depth 1 https://github.com/timescale/pg_textsearch.git && \
+    cd pg_textsearch && \
+    make && \
+    make install && \
+    rm -rf /tmp/pg_textsearch
+
 RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
     export LANG=C.UTF-8 && \
     wget https://github.com/brown-uk/dict_uk/archive/refs/heads/master.zip -O /tmp/master.zip && \
@@ -49,16 +57,6 @@ RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
     cd distr/hunspell && ../../gradlew hunspell && \
     rm -rf /tmp/master.zip /tmp/dict_uk-master
 
-RUN mkdir -p /tmp/pg_textsearch && \
-    cd /tmp && \
-    wget -O pg_textsearch.tar.gz https://github.com/timescale/pg_textsearch/archive/refs/tags/v0.2.0.tar.gz && \
-    tar -xzf pg_textsearch.tar.gz -C /tmp/pg_textsearch --strip-components=1 && \
-    rm pg_textsearch.tar.gz && \
-    cd /tmp/pg_textsearch && \
-    make && \
-    make install && \
-    rm -rf /tmp/pg_textsearch
-
 FROM postgres:$PG_MAJOR-$DEBIAN_CODENAME
 
 ARG PG_MAJOR
@@ -66,9 +64,12 @@ ARG PG_MAJOR
 COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/vector.so /usr/lib/postgresql/$PG_MAJOR/lib/
 COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/vector* /usr/share/postgresql/$PG_MAJOR/extension/
 
+COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/pg_textsearch.so /usr/lib/postgresql/$PG_MAJOR/lib/
+COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/pg_textsearch* /usr/share/postgresql/$PG_MAJOR/extension/
+
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict
 COPY --from=builder /tmp/dict_uk/distr/postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
 
-COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/pg_textsearch.so /usr/lib/postgresql/$PG_MAJOR/lib/
-COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/pg_textsearch* /usr/share/postgresql/$PG_MAJOR/extension/
+# pg_textsearch requires shared_preload_libraries
+CMD ["postgres", "-c", "shared_preload_libraries=pg_textsearch"]
