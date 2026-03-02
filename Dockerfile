@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG PG_MAJOR=17
+ARG PG_MAJOR=18
 ARG DEBIAN_CODENAME=bookworm
 
 FROM debian:$DEBIAN_CODENAME AS builder
@@ -49,6 +49,16 @@ RUN export _JAVA_OPTIONS="-Dfile.encoding=UTF-8" && \
     cd distr/hunspell && ../../gradlew hunspell && \
     rm -rf /tmp/master.zip /tmp/dict_uk-master
 
+RUN mkdir -p /tmp/pg_textsearch && \
+    cd /tmp && \
+    wget -O pg_textsearch.tar.gz https://github.com/timescale/pg_textsearch/archive/refs/tags/v0.2.0.tar.gz && \
+    tar -xzf pg_textsearch.tar.gz -C /tmp/pg_textsearch --strip-components=1 && \
+    rm pg_textsearch.tar.gz && \
+    cd /tmp/pg_textsearch && \
+    make && \
+    make install && \
+    rm -rf /tmp/pg_textsearch
+
 FROM postgres:$PG_MAJOR-$DEBIAN_CODENAME
 
 ARG PG_MAJOR
@@ -59,3 +69,6 @@ COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/vector* /usr/share
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.aff /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict
 COPY --from=builder /tmp/dict_uk/distr/postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
+
+COPY --from=builder /usr/lib/postgresql/$PG_MAJOR/lib/pg_textsearch.so /usr/lib/postgresql/$PG_MAJOR/lib/
+COPY --from=builder /usr/share/postgresql/$PG_MAJOR/extension/pg_textsearch* /usr/share/postgresql/$PG_MAJOR/extension/
