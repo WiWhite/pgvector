@@ -71,5 +71,14 @@ COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.aff /usr/sh
 COPY --from=builder /tmp/dict_uk/distr/hunspell/build/hunspell/uk_UA.dic /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict
 COPY --from=builder /tmp/dict_uk/distr/postgresql/ukrainian.stop /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
 
+# Ukrainian apostrophe fix (F1, 2026-08-24): PostgreSQL's default parser splits
+# tokens at ASCII ' (U+0027) and ' (U+2019) but keeps U+02BC words whole.
+# Re-encode hunspell dict/affix/stopwords to U+02BC so single-token apostrophe
+# words lemmatize (query/index sides translate to U+02BC to match).
+RUN sed -i -e "s/\x27/\xca\xbc/g" -e "s/\xe2\x80\x99/\xca\xbc/g" \
+      /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.dict \
+      /usr/share/postgresql/$PG_MAJOR/tsearch_data/uk_ua.affix \
+      /usr/share/postgresql/$PG_MAJOR/tsearch_data/ukrainian.stop
+
 # pg_textsearch requires shared_preload_libraries
 CMD ["postgres", "-c", "shared_preload_libraries=pg_textsearch"]
